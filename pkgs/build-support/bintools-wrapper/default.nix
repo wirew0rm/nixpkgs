@@ -187,6 +187,7 @@ stdenv.mkDerivation {
       else if targetPlatform.isPower then if targetPlatform.isBigEndian then "ppc" else "lppc"
       else if targetPlatform.isSparc then "sparc"
       else if targetPlatform.isAvr then "avr"
+      else if targetPlatform.isXtensa then "xtensa"
       else throw "unknown emulation for platform: " + targetPlatform.config;
     in targetPlatform.platform.bfdEmulation or (fmt + sep + arch);
 
@@ -296,6 +297,10 @@ stdenv.mkDerivation {
     + optionalString targetPlatform.isAvr ''
       hardening_unsupported_flags+=" relro bindnow"
     ''
+
+    #+ optionalString targetPlatform.isXtensa ''
+    #  hardening_unsupported_flags+=" "
+    #''
 
     + optionalString (libc != null && targetPlatform.isAvr) ''
       for isa in avr5 avr3 avr4 avr6 avr25 avr31 avr35 avr51 avrxmega2 avrxmega4 avrxmega5 avrxmega6 avrxmega7 tiny-stack; do

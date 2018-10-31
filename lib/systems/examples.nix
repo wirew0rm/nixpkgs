@@ -99,6 +99,16 @@ rec {
   riscv64 = riscv "64";
   riscv32 = riscv "32";
 
+  #
+  # Bare embedded systems
+  #
+
+  esp32 = {
+    config = "xtensa_esp32-none-elf";
+    libc = "newlib";
+    platform = platforms.espressif-esp32;
+  };
+
   avr = {
     config = "avr";
   };

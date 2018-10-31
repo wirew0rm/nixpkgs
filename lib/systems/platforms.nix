@@ -450,6 +450,25 @@ rec {
   };
 
   ##
+  ## xtensa procesors e.g. esp32
+  ##
+
+  espressif-esp32 = {
+    name = "espressif esp32";
+    gcc = {
+      arch = "xtensa";
+      abi = "elf";
+    };
+    xtensaOverlay = builtins.fetchzip {
+      url = "https://github.com/espressif/crosstool-NG/raw/601666261d8a629563b46fceebc8cb79ee216ae9/overlays/xtensa_esp32.tar";
+      sha256 = "1s02skdv7y43vjlvx8z71v14xw08ggsim8nq9q1lwi4fc4k0f7xj";
+      striRoot = false;
+      name = "xtensa_esp32_overlay_file";
+    };
+    toolchainPatches = "";
+  };
+
+  ##
   ## Other
   ##
 

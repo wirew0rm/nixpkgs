@@ -46,6 +46,7 @@ rec {
   significantBytes = setTypes types.openSignificantByte {
     bigEndian = {};
     littleEndian = {};
+    archSupportsBothEndian = {};
   };
 
   ################################################################################
@@ -103,6 +104,7 @@ rec {
     wasm64   = { bits = 64; significantByte = littleEndian; family = "wasm"; };
 
     avr      = { bits = 8; family = "avr"; };
+    xtensa_esp32 = { bits = 32; significantByte = archSupportsBothEndian; family = "xtensa"; };
   };
 
   ################################################################################

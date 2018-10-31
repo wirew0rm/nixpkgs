@@ -146,6 +146,7 @@ in
   aarch64-embedded = mapTestOnCross lib.systems.examples.aarch64-embedded embedded;
   i686-embedded = mapTestOnCross lib.systems.examples.i686-embedded embedded;
   x86_64-embedded = mapTestOnCross lib.systems.examples.x86_64-embedded embedded;
+  esp32 = mapTestOnCross lib.systems.examples.esp32 embedded;
 
   /* Cross-built bootstrap tools for every supported platform */
   bootstrapTools = let
