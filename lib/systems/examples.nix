@@ -104,7 +104,7 @@ rec {
   #
 
   esp32 = {
-    config = "xtensa_esp32-none-elf";
+    config = "xtensa-esp32-elf";
     libc = "newlib";
     platform = platforms.espressif-esp32;
   };

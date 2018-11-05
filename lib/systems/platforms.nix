@@ -456,13 +456,20 @@ rec {
   espressif-esp32 = {
     name = "espressif esp32";
     gcc = {
-      arch = "xtensa";
-      abi = "elf";
+      # this has to be empty, because gcc does not support
+      # --arch and --abi flags for xtensa
+      #arch = "xtensa";
+      #abi = "elf";
+      #cpu = "";
+      #fpu = "";
+      #float = "";
+      #float-abi = "";
+      #mode = "";
     };
-    xtensaOverlay = builtins.fetchzip {
+    xtensaOverlay = (import <nixpkgs> {}).fetchzip {
       url = "https://github.com/espressif/crosstool-NG/raw/601666261d8a629563b46fceebc8cb79ee216ae9/overlays/xtensa_esp32.tar";
       sha256 = "1s02skdv7y43vjlvx8z71v14xw08ggsim8nq9q1lwi4fc4k0f7xj";
-      striRoot = false;
+      stripRoot = false;
       name = "xtensa_esp32_overlay_file";
     };
     toolchainPatches = "";

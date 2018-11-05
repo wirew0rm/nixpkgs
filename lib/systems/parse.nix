@@ -104,7 +104,7 @@ rec {
     wasm64   = { bits = 64; significantByte = littleEndian; family = "wasm"; };
 
     avr      = { bits = 8; family = "avr"; };
-    xtensa_esp32 = { bits = 32; significantByte = archSupportsBothEndian; family = "xtensa"; };
+    xtensa   = { bits = 32; significantByte = archSupportsBothEndian; family = "xtensa"; };
   };
 
   ################################################################################
@@ -120,6 +120,7 @@ rec {
   vendors = setTypes types.openVendor {
     apple = {};
     pc = {};
+    esp32  = {};
 
     none = {};
     unknown = {};
