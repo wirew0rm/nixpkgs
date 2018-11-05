@@ -55,6 +55,10 @@ let version = "5.5.0";
 
     inherit (stdenv) buildPlatform hostPlatform targetPlatform;
 
+  # apply overlay for xtensa processors
+  prePatch = stdenv.lib.optional ( stdenv.targetPlatform.parsed.cpu == stdenv.lib.systems.parse.cpuTypes.xtensa) ''
+    install -t ./include/xtensa-config.h ${stdenv.targetPlatform.platform.xtensaOverlay}/gcc/include/xtensa-config.h -D;'';
+
     patches =
       [ ../use-source-date-epoch.patch ]
       ++ optional (targetPlatform != hostPlatform) ../libstdc++-target.patch

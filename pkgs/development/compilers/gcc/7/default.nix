@@ -164,7 +164,10 @@ stdenv.mkDerivation ({
 
     substituteInPlace libgfortran/configure \
       --replace "-install_name \\\$rpath/\\\$soname" "-install_name $lib/lib/\\\$soname"
-  '';
+  '' +
+  # apply overlay for xtensa processors
+  stdenv.lib.optionalString ( stdenv.targetPlatform.parsed.cpu == stdenv.lib.systems.parse.cpuTypes.xtensa) ''
+    install -t ./include/xtensa-config.h ${stdenv.targetPlatform.platform.xtensaOverlay}/gcc/include/xtensa-config.h -D;'';
 
   postPatch = ''
     configureScripts=$(find . -name configure)

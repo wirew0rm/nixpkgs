@@ -24,6 +24,11 @@ stdenv.mkDerivation rec {
     sha256 = "028cklfqaab24glva1ks2aqa1zxa6w6xmc8q34zs1sb7h22dxspg";
   });
 
+  # apply overlay for xtensa processors
+  prePatch = stdenv.lib.optional ( stdenv.targetPlatform.parsed.cpu == stdenv.lib.systems.parse.cpuTypes.xtensa) ''
+    install -t ./bfd/xtensa_modules.c ${stdenv.targetPlatform.platform.xtensaOverlay}/binutils/bfd/xtensa_modules.c -D;
+    install -t ./include/xtensa-config.h ${stdenv.targetPlatform.platform.xtensaOverlay}/binutils/include/xtensa-config.h -D;'';
+
   patches = [
     # Since binutils 2.22, DT_NEEDED flags aren't copied for dynamic outputs.
     # That requires upstream changes for things to work. So we can patch it to
