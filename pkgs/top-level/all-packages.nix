@@ -122,6 +122,8 @@ with pkgs;
     inherit dhall-nix;
   };
 
+  deadcode = callPackage ../development/tools/deadcode { };
+
   diffPlugins = (callPackage ../build-support/plugins.nix {}).diffPlugins;
 
   dieHook = makeSetupHook {} ../build-support/setup-hooks/die.sh;
@@ -577,6 +579,8 @@ with pkgs;
 
   avfs = callPackage ../tools/filesystems/avfs { };
 
+  avldrums-lv2 = callPackage ../applications/audio/avldrums-lv2 { };
+
   aws-iam-authenticator = callPackage ../tools/security/aws-iam-authenticator {};
 
   awscli = callPackage ../tools/admin/awscli { };
@@ -654,6 +658,8 @@ with pkgs;
   container-linux-config-transpiler = callPackage ../development/tools/container-linux-config-transpiler { };
 
   cconv = callPackage ../tools/text/cconv { };
+
+  go-check = callPackage ../development/tools/check { };
 
   chkcrontab = callPackage ../tools/admin/chkcrontab { };
 
@@ -798,6 +804,8 @@ with pkgs;
     inherit (darwin.apple_sdk.frameworks) Security;
   };
   aria = aria2;
+
+  asmfmt = callPackage ../development/tools/asmfmt { };
 
   aspcud = callPackage ../tools/misc/aspcud { };
 
@@ -1134,8 +1142,6 @@ with pkgs;
 
   consul = callPackage ../servers/consul { };
 
-  consul-ui = callPackage ../servers/consul/ui.nix { };
-
   consul-alerts = callPackage ../servers/monitoring/consul-alerts { };
 
   consul-template = callPackage ../tools/system/consul-template { };
@@ -1308,6 +1314,8 @@ with pkgs;
   envconsul = callPackage ../tools/system/envconsul { };
 
   envsubst = callPackage ../tools/misc/envsubst { };
+
+  errcheck = callPackage ../development/tools/errcheck { };
 
   eschalot = callPackage ../tools/security/eschalot { };
 
@@ -2347,6 +2355,8 @@ with pkgs;
 
   easyrsa2 = callPackage ../tools/networking/easyrsa/2.x.nix { };
 
+  easysnap = callPackage ../tools/backup/easysnap { };
+
   ebook_tools = callPackage ../tools/text/ebook-tools { };
 
   ecryptfs = callPackage ../tools/security/ecryptfs { };
@@ -3293,6 +3303,8 @@ with pkgs;
   hubicfuse = callPackage ../tools/filesystems/hubicfuse { };
 
   hwinfo = callPackage ../tools/system/hwinfo { };
+
+  hybridreverb2 = callPackage ../applications/audio/hybridreverb2 { };
 
   hylafaxplus = callPackage ../servers/hylafaxplus { };
 
@@ -4382,6 +4394,8 @@ with pkgs;
 
   nms = callPackage ../tools/misc/nms { };
 
+  nomachine-client = callPackage ../tools/admin/nomachine-client { };
+
   notify-desktop = callPackage ../tools/misc/notify-desktop {};
 
   nkf = callPackage ../tools/text/nkf {};
@@ -5082,6 +5096,8 @@ with pkgs;
   reckon = callPackage ../tools/text/reckon { };
 
   recoverjpeg = callPackage ../tools/misc/recoverjpeg { };
+
+  reftools = callPackage ../development/tools/reftools { };
 
   reposurgeon = callPackage ../applications/version-management/reposurgeon { };
 
@@ -6855,7 +6871,7 @@ with pkgs;
 
   haskell = callPackage ./haskell-packages.nix { };
 
-  haskellPackages = haskell.packages.ghc843.override {
+  haskellPackages = haskell.packages.ghc844.override {
     overrides = config.haskellPackageOverrides or haskell.packageOverrides;
   };
 
@@ -6935,6 +6951,10 @@ with pkgs;
 
   go-junit-report = callPackage ../development/tools/go-junit-report { };
 
+  gogetdoc = callPackage ../development/tools/gogetdoc { };
+
+  gometalinter = callPackage ../development/tools/gometalinter { };
+
   gox = callPackage ../development/tools/gox { };
 
   gprolog = callPackage ../development/compilers/gprolog { };
@@ -6976,11 +6996,11 @@ with pkgs;
         inherit (gnome2) GConf gnome_vfs;
       };
 
-  openjdk10 =
+  openjdk11 =
     if stdenv.isDarwin then
-      callPackage ../development/compilers/openjdk/darwin/10.nix { }
+      callPackage ../development/compilers/openjdk/darwin/11.nix { }
     else
-      callPackage ../development/compilers/openjdk/10.nix {
+      callPackage ../development/compilers/openjdk/11.nix {
         inherit (gnome2) GConf gnome_vfs;
       };
 
@@ -7000,17 +7020,14 @@ with pkgs;
         (lib.addMetaAttrs { outputsToInstall = [ "jre" ]; }
           ((openjdk8.override { minimal = true; }).jre // { outputs = [ "jre" ]; }));
 
-  jdk10 = openjdk10 // { outputs = [ "out" ]; };
-  jre10 = lib.setName "openjre-${lib.getVersion pkgs.openjdk10.jre}"
-    (lib.addMetaAttrs { outputsToInstall = [ "jre" ]; }
-      (openjdk10.jre // { outputs = [ "jre" ]; }));
-  jre10_headless =
+  jdk11 = openjdk11 // { outputs = [ "out" ]; };
+  jdk11_headless =
     if stdenv.isDarwin then
-      jre10
+      jdk11
     else
-      lib.setName "openjre-${lib.getVersion pkgs.openjdk10.jre}-headless"
-        (lib.addMetaAttrs { outputsToInstall = [ "jre" ]; }
-          ((openjdk10.override { minimal = true; }).jre // { outputs = [ "jre" ]; }));
+      lib.setName "openjdk-${lib.getVersion pkgs.openjdk11}-headless"
+        (lib.addMetaAttrs {}
+          ((openjdk11.override { minimal = true; }) // {}));
 
   jdk = jdk8;
   jre = jre8;
@@ -7028,17 +7045,11 @@ with pkgs;
 
   oraclejdk8psu = pkgs.oraclejdk8psu_distro true false;
 
-  oraclejdk10 = pkgs.oraclejdk10distro "JDK" false;
-
   oraclejre = lowPrio (pkgs.jdkdistro false false);
 
   oraclejre8 = lowPrio (pkgs.oraclejdk8distro false false);
 
   oraclejre8psu = lowPrio (pkgs.oraclejdk8psu_distro false false);
-
-  oraclejre10 = lowPrio (pkgs.oraclejdk10distro "JRE" false);
-
-  oracleserverjre10 = lowPrio (pkgs.oraclejdk10distro "ServerJRE" false);
 
   jrePlugin = jre8Plugin;
 
@@ -7053,9 +7064,6 @@ with pkgs;
   oraclejdk8psu_distro = installjdk: pluginSupport:
     (if pluginSupport then appendToName "with-plugin" else x: x)
       (callPackage ../development/compilers/oraclejdk/jdk8psu-linux.nix { inherit installjdk pluginSupport; });
-
-  oraclejdk10distro = packageType: _:
-      (callPackage ../development/compilers/oraclejdk/jdk10-linux.nix { inherit packageType; });
 
   javacard-devkit = pkgsi686Linux.callPackage ../development/compilers/javacard-devkit { };
 
@@ -7361,7 +7369,9 @@ with pkgs;
   cargo-tree = callPackage ../tools/package-management/cargo-tree { };
   cargo-update = callPackage ../tools/package-management/cargo-update { };
 
-  cargo-asm = callPackage ../development/tools/rust/cargo-asm { };
+  cargo-asm = callPackage ../development/tools/rust/cargo-asm {
+    inherit (darwin.apple_sdk.frameworks) Security;
+  };
   cargo-fuzz = callPackage ../development/tools/rust/cargo-fuzz { };
 
   pyo3-pack = callPackage ../development/tools/rust/pyo3-pack { };
@@ -7552,6 +7562,8 @@ with pkgs;
   dhall-json = haskell.lib.justStaticExecutables haskellPackages.dhall-json;
 
   dhall-text = haskell.lib.justStaticExecutables haskellPackages.dhall-text;
+
+  dhallPackages = import ../development/dhall-modules { inherit pkgs; };
 
   duktape = callPackage ../development/interpreters/duktape { };
 
@@ -7776,7 +7788,6 @@ with pkgs;
   python2Full = python2.override{x11Support=true;};
   python27Full = python27.override{x11Support=true;};
   python3Full = python3.override{x11Support=true;};
-  python34Full = python34.override{x11Support=true;};
   python35Full = python35.override{x11Support=true;};
   python36Full = python36.override{x11Support=true;};
   python37Full = python37.override{x11Support=true;};
@@ -7789,10 +7800,6 @@ with pkgs;
   python27 = callPackage ../development/interpreters/python/cpython/2.7 {
     self = python27;
     inherit (darwin) CF configd;
-  };
-  python34 = callPackage ../development/interpreters/python/cpython/3.4 {
-    inherit (darwin) CF configd;
-    self = python34;
   };
   python35 = callPackage ../development/interpreters/python/cpython/3.5 {
     inherit (darwin) CF configd;
@@ -7815,7 +7822,6 @@ with pkgs;
 
   # Python package sets.
   python27Packages = lib.hiPrioSet (recurseIntoAttrs python27.pkgs);
-  python34Packages = python34.pkgs;
   python35Packages = python35.pkgs;
   python36Packages = recurseIntoAttrs python36.pkgs;
   python37Packages = python37.pkgs;
@@ -7987,6 +7993,8 @@ with pkgs;
 
   jython = callPackage ../development/interpreters/jython {};
 
+  gImageReader = callPackage ../applications/misc/gImageReader { };
+
   guile-cairo = callPackage ../development/guile-modules/guile-cairo { };
 
   guile-fibers = callPackage ../development/guile-modules/guile-fibers { };
@@ -8061,6 +8069,7 @@ with pkgs;
     ansible_2_4
     ansible_2_5
     ansible_2_6
+    ansible_2_7
     ansible2
     ansible;
 
@@ -8133,10 +8142,10 @@ with pkgs;
     inherit (darwin) cctools;
     inherit (darwin.apple_sdk.frameworks) CoreFoundation CoreServices Foundation;
   };
-  bazel_jdk10 = callPackage ../development/tools/build-managers/bazel {
+  bazel_jdk11 = callPackage ../development/tools/build-managers/bazel {
     inherit (darwin) cctools;
     inherit (darwin.apple_sdk.frameworks) CoreFoundation CoreServices Foundation;
-    runJdk = jdk10;
+    runJdk = jdk11;
   };
 
   bazel-buildtools = callPackage ../development/tools/build-managers/bazel/buildtools { };
@@ -9725,13 +9734,13 @@ with pkgs;
     # libc is hackily often used from the previous stage. This `or`
     # hack fixes the hack, *sigh*.
     /**/ if name == "glibc" then targetPackages.glibcCross or glibcCross
-    else if name == "bionic" then targetPackages.bionic
-    else if name == "uclibc" then targetPackages.uclibcCross
+    else if name == "bionic" then targetPackages.bionic or bionic
+    else if name == "uclibc" then targetPackages.uclibcCross or uclibcCross
     else if name == "avrlibc" then targetPackages.avrlibcCross or avrlibcCross
     else if name == "newlib" then targetPackages.newlibCross or newlibCross
     else if name == "musl" then targetPackages.muslCross or muslCross
     else if name == "msvcrt" then targetPackages.windows.mingw_w64 or windows.mingw_w64
-    else if stdenv.targetPlatform.useiOSPrebuilt then targetPackages.darwin.iosSdkPkgs.libraries
+    else if stdenv.targetPlatform.useiOSPrebuilt then targetPackages.darwin.iosSdkPkgs.libraries or darwin.iosSdkPkgs.libraries
     else if name == "libSystem" then targetPackages.darwin.xcode
     else throw "Unknown libc";
 
@@ -10133,6 +10142,8 @@ with pkgs;
   };
 
   imlibsetroot = callPackage ../applications/graphics/imlibsetroot { libXinerama = xorg.libXinerama; } ;
+
+  ineffassign = callPackage ../development/tools/ineffassign { };
 
   ijs = callPackage ../development/libraries/ijs { };
 
@@ -11611,6 +11622,7 @@ with pkgs;
   opensaml-cpp = callPackage ../development/libraries/opensaml-cpp { };
 
   openscenegraph = callPackage ../development/libraries/openscenegraph { };
+  openscenegraph_3_4 = callPackage ../development/libraries/openscenegraph/3.4.0.nix { };
 
   openslp = callPackage ../development/libraries/openslp {};
 
@@ -11699,7 +11711,9 @@ with pkgs;
   pgroonga = callPackage ../servers/sql/postgresql/pgroonga {};
 
   plv8 = callPackage ../servers/sql/postgresql/plv8 {
-    v8 = v8_6_x;
+    v8 = callPackage ../development/libraries/v8/plv8_6_x.nix {
+      inherit (python2Packages) python;
+    };
   };
 
   phonon = callPackage ../development/libraries/phonon {};
@@ -12196,7 +12210,7 @@ with pkgs;
     avrlibc = pkgsCross.avr.libcCross;
   };
 
-  simgear = callPackage ../development/libraries/simgear { };
+  simgear = callPackage ../development/libraries/simgear { openscenegraph = openscenegraph_3_4; };
 
   simp_le = callPackage ../tools/admin/simp_le { };
 
@@ -12523,6 +12537,8 @@ with pkgs;
   umockdev = callPackage ../development/libraries/umockdev {
     vala = vala_0_40;
   };
+
+  unconvert = callPackage ../development/tools/unconvert { };
 
   unibilium = callPackage ../development/libraries/unibilium { };
 
@@ -13597,6 +13613,8 @@ with pkgs;
     libmemcached = null; # Detection is broken upstream
   };
 
+  timescaledb-parallel-copy = callPackage ../development/tools/database/timescaledb-parallel-copy { };
+
   postgresql = postgresql_9_6;
 
   inherit (callPackages ../servers/sql/postgresql { })
@@ -14024,6 +14042,8 @@ with pkgs;
 
   drbd = callPackage ../os-specific/linux/drbd { };
 
+  dropwatch = callPackage ../os-specific/linux/dropwatch { };
+
   dstat = callPackage ../os-specific/linux/dstat { };
 
   # unstable until the first 1.x release
@@ -14208,14 +14228,6 @@ with pkgs;
 
   klibcShrunk = lowPrio (callPackage ../os-specific/linux/klibc/shrunk.nix { });
 
-  linux_beagleboard = callPackage ../os-specific/linux/kernel/linux-beagleboard.nix {
-    kernelPatches =
-      [ kernelPatches.bridge_stp_helper
-        kernelPatches.cpu-cgroup-v2."4.11"
-        kernelPatches.modinst_arg_list_too_long
-      ];
-  };
-
   linux_mptcp = linux_mptcp_94;
   linux_mptcp_94 = callPackage ../os-specific/linux/kernel/linux-mptcp.nix {
     kernelPatches =
@@ -14278,11 +14290,6 @@ with pkgs;
         # when adding a new linux version
         kernelPatches.cpu-cgroup-v2."4.11"
         kernelPatches.modinst_arg_list_too_long
-        # https://github.com/NixOS/nixpkgs/issues/42755
-        # Remove these xen-netfront patches once they're included in
-        # upstream! Fixes https://github.com/NixOS/nixpkgs/issues/42755
-        kernelPatches.xen-netfront_fix_mismatched_rtnl_unlock
-        kernelPatches.xen-netfront_update_features_after_registering_netdev
       ];
   };
 
@@ -14327,17 +14334,6 @@ with pkgs;
     ];
   };
 
-  linux_samus_4_12 = callPackage ../os-specific/linux/kernel/linux-samus-4.12.nix {
-    kernelPatches =
-      [ kernelPatches.bridge_stp_helper
-        kernelPatches.p9_fixes
-        # See pkgs/os-specific/linux/kernel/cpu-cgroup-v2-patches/README.md
-        # when adding a new linux version
-        kernelPatches.cpu-cgroup-v2."4.11"
-        kernelPatches.modinst_arg_list_too_long
-      ];
-  };
-
   linux_hardkernel_4_14 = callPackage ../os-specific/linux/kernel/linux-hardkernel-4.14.nix {
     kernelPatches = [
       kernelPatches.bridge_stp_helper
@@ -14369,6 +14365,8 @@ with pkgs;
     bcc = callPackage ../os-specific/linux/bcc {
       python = python3;
     };
+
+    bpftrace = callPackage ../os-specific/linux/bpftrace { };
 
     bbswitch = callPackage ../os-specific/linux/bbswitch {};
 
@@ -14504,7 +14502,6 @@ with pkgs;
   linux_latest = linuxPackages_latest.kernel;
 
   # Build the kernel modules for the some of the kernels.
-  linuxPackages_beagleboard = linuxPackagesFor pkgs.linux_beagleboard;
   linuxPackages_mptcp = linuxPackagesFor pkgs.linux_mptcp;
   linuxPackages_rpi = linuxPackagesFor pkgs.linux_rpi;
   linuxPackages_4_4 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_4_4);
@@ -14563,11 +14560,6 @@ with pkgs;
   linuxPackages_xen_dom0_hardened = recurseIntoAttrs (hardenedLinuxPackagesFor (pkgs.linux.override { features.xen_dom0=true; }));
 
   linuxPackages_latest_xen_dom0_hardened = recurseIntoAttrs (hardenedLinuxPackagesFor (pkgs.linux_latest.override { features.xen_dom0=true; }));
-
-  # Samus kernels
-  linuxPackages_samus_4_12 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_samus_4_12);
-  linuxPackages_samus_latest = linuxPackages_samus_4_12;
-  linux_samus_latest = linuxPackages_samus_latest.kernel;
 
   # Hardkernel (Odroid) kernels.
   linuxPackages_hardkernel_4_14 = recurseIntoAttrs (linuxPackagesFor pkgs.linux_hardkernel_4_14);
@@ -14697,18 +14689,21 @@ with pkgs;
 
   easyjson = callPackage ../development/tools/easyjson { };
 
+  iferr = callPackage ../development/tools/iferr { };
+
   go-bindata = callPackage ../development/tools/go-bindata { };
 
   go-bindata-assetfs = callPackage ../development/tools/go-bindata-assetfs { };
 
   go-protobuf = callPackage ../development/tools/go-protobuf { };
 
-
   go-symbols = callPackage ../development/tools/go-symbols { };
 
   go-outline = callPackage ../development/tools/go-outline { };
 
   gocode = callPackage ../development/tools/gocode { };
+
+  goconst = callPackage ../development/tools/goconst { };
 
   goconvey = callPackage ../development/tools/goconvey { };
 
@@ -14718,13 +14713,19 @@ with pkgs;
 
   golangci-lint = callPackage ../development/tools/golangci-lint { };
 
+  gocyclo = callPackage ../development/tools/gocyclo { };
+
   godef = callPackage ../development/tools/godef { };
 
   gopkgs = callPackage ../development/tools/gopkgs { };
 
+  gosec = callPackage ../development/tools/gosec { };
+
   govers = callPackage ../development/tools/govers { };
 
   govendor = callPackage ../development/tools/govendor { };
+
+  go-tools = callPackage ../development/tools/go-tools { };
 
   gotools = callPackage ../development/tools/gotools { };
 
@@ -14737,6 +14738,8 @@ with pkgs;
   };
 
   gotests = callPackage ../development/tools/gotests { };
+
+  impl = callPackage ../development/tools/impl { };
 
   quicktemplate = callPackage ../development/tools/quicktemplate { };
 
@@ -14804,8 +14807,6 @@ with pkgs;
   pmount = callPackage ../os-specific/linux/pmount { };
 
   pmutils = callPackage ../os-specific/linux/pm-utils { };
-
-  pmtools = callPackage ../os-specific/linux/pmtools { };
 
   policycoreutils = callPackage ../os-specific/linux/policycoreutils { };
 
@@ -15503,6 +15504,10 @@ with pkgs;
 
   hasklig = callPackage ../data/fonts/hasklig {};
 
+  interfacer = callPackage ../development/tools/interfacer { };
+
+  maligned = callPackage ../development/tools/maligned { };
+
   inter-ui = callPackage ../data/fonts/inter-ui { };
 
   siji = callPackage ../data/fonts/siji { };
@@ -16051,6 +16056,8 @@ with pkgs;
     pulseaudioSupport = config.pulseaudio or false;
   };
 
+  cmusfm = callPackage ../applications/audio/cmusfm { };
+
   cni = callPackage ../applications/networking/cluster/cni {};
   cni-plugins = callPackage ../applications/networking/cluster/cni/plugins.nix {};
 
@@ -16285,7 +16292,7 @@ with pkgs;
   eaglemode = callPackage ../applications/misc/eaglemode { };
 
   eclipses = recurseIntoAttrs (callPackage ../applications/editors/eclipse {
-    jdk = jdk10;
+    jdk = jdk11;
   });
 
   ecs-agent = callPackage ../applications/virtualization/ecs-agent { };
@@ -17242,6 +17249,8 @@ with pkgs;
   slack = callPackage ../applications/networking/instant-messengers/slack { };
 
   slack-cli = callPackage ../tools/networking/slack-cli { };
+
+  slack-term = callPackage ../applications/networking/instant-messengers/slack-term { };
 
   singularity = callPackage ../applications/virtualization/singularity { };
 
@@ -18759,6 +18768,10 @@ with pkgs;
   rstudio = libsForQt5.callPackage ../applications/editors/rstudio {
     boost = boost166;
   };
+  rstudio-preview = libsForQt5.callPackage ../applications/editors/rstudio/preview.nix {
+    boost = boost166;
+    llvmPackages = llvmPackages_7;
+  };
 
   rsync = callPackage ../applications/networking/sync/rsync {
     enableACLs = !(stdenv.isDarwin || stdenv.isSunOS || stdenv.isFreeBSD);
@@ -19745,6 +19758,8 @@ with pkgs;
     gtk = gtk2;
   };
 
+  x11basic = callPackage ../development/compilers/x11basic { };
+
   x11vnc = callPackage ../tools/X11/x11vnc { };
 
   x2goclient = libsForQt5.callPackage ../applications/networking/remote/x2goclient { };
@@ -20244,7 +20259,7 @@ with pkgs;
 
   fish-fillets-ng = callPackage ../games/fish-fillets-ng {};
 
-  flightgear = libsForQt5.callPackage ../games/flightgear { };
+  flightgear = libsForQt5.callPackage ../games/flightgear { openscenegraph = openscenegraph_3_4; };
 
   flock = callPackage ../development/tools/flock { };
 
@@ -20686,6 +20701,7 @@ with pkgs;
     # Torcs wants to make shared libraries linked with plib libraries (it provides static).
     # i686 is the only platform I know than can do that linking without plib built with -fPIC
     libpng = libpng12;
+    openscenegraph = openscenegraph_3_4;
   };
 
   torcs = callPackage ../games/torcs { };
@@ -21351,9 +21367,7 @@ with pkgs;
 
   abella = callPackage ../applications/science/logic/abella {};
 
-  acgtk = callPackage ../applications/science/logic/acgtk {
-    ocamlPackages = ocaml-ng.ocamlPackages_4_05;
-  };
+  acgtk = callPackage ../applications/science/logic/acgtk {};
 
   alt-ergo = callPackage ../applications/science/logic/alt-ergo {};
 
@@ -21364,13 +21378,14 @@ with pkgs;
   boogie = dotnetPackages.Boogie;
 
   inherit (callPackage ./coq-packages.nix {
-    inherit (ocaml-ng) ocamlPackages_4_02
-                       ocamlPackages_4_05
-    ;
+    inherit (ocaml-ng) ocamlPackages_4_05;
   }) mkCoqPackages
-    coq_8_5 coq_8_6 coq_8_7 coq_8_8
-    coqPackages_8_5 coqPackages_8_6 coqPackages_8_7 coqPackages_8_8
-    coqPackages coq
+    coqPackages_8_5  coq_8_5
+    coqPackages_8_6  coq_8_6
+    coqPackages_8_7  coq_8_7
+    coqPackages_8_8  coq_8_8
+    coqPackages_8_9  coq_8_9
+    coqPackages      coq
   ;
 
   coq2html = callPackage ../applications/science/logic/coq2html {
@@ -22094,38 +22109,56 @@ with pkgs;
 
   nixops-dns = callPackage ../tools/package-management/nixops/nixops-dns.nix { };
 
-  /*
-   * Evaluate a NixOS configuration using this evaluation of Nixpkgs.
-   *
-   * With this function you can write, for example, a package that
-   * depends on a custom virtual machine image.
-   *
-   * Parameter: A module, path or list of those that represent the
-   *            configuration of the NixOS system to be constructed.
-   *
-   * Result:    An attribute set containing packages produced by this
-   *            evaluation of NixOS, such as toplevel, kernel and
-   *            initialRamdisk.
-   *            The result can be extended in the modules by defining
-   *            extra options in system.build.
-   *
-   * Unlike in plain NixOS, the nixpkgs.config, nixpkgs.overlays and
-   * nixpkgs.system options will be ignored by default. Instead,
-   * nixpkgs.pkgs will have the default value of pkgs as it was
-   * constructed right after invoking the nixpkgs function (e.g. the
-   * value of import <nixpkgs> { overlays = [./my-overlay.nix]; }
-   * but not the value of (import <nixpkgs> {} // { extra = ...; }).
-   *
-   * If you do want to use the config.nixpkgs options, you are
-   * probably better off by calling nixos/lib/eval-config.nix
-   * directly, even though it is possible to set config.nixpkgs.pkgs.
-   *
-   * For more information about writing NixOS modules, see
-   * https://nixos.org/nixos/manual/index.html#sec-writing-modules
-   *
-   * Note that you will need to have called Nixpkgs with the system
-   * parameter set to the right value for your deployment target.
-   */
+  /* Evaluate a NixOS configuration using this evaluation of Nixpkgs.
+
+     With this function you can write, for example, a package that
+     depends on a custom virtual machine image.
+
+     Parameter: A module, path or list of those that represent the
+                configuration of the NixOS system to be constructed.
+
+     Result:    An attribute set containing packages produced by this
+                evaluation of NixOS, such as toplevel, kernel and
+                initialRamdisk.
+                The result can be extended in the modules by defining
+                extra attributes in system.build.
+
+     Example:
+
+         let
+           myOS = pkgs.nixos ({ lib, pkgs, config, ... }: {
+
+             config.services.nginx = {
+               enable = true;
+               # ...
+             };
+
+             # Use config.system.build to exports relevant parts of a
+             # configuration. The runner attribute should not be
+             # considered a fully general replacement for systemd
+             # functionality.
+             config.system.build.run-nginx = config.systemd.services.nginx.runner;
+           });
+         in
+           myOS.run-nginx
+
+     Unlike in plain NixOS, the nixpkgs.config, nixpkgs.overlays and
+     nixpkgs.system options will be ignored by default. Instead,
+     nixpkgs.pkgs will have the default value of pkgs as it was
+     constructed right after invoking the nixpkgs function (e.g. the
+     value of import <nixpkgs> { overlays = [./my-overlay.nix]; }
+     but not the value of (import <nixpkgs> {} // { extra = ...; }).
+
+     If you do want to use the config.nixpkgs options, you are
+     probably better off by calling nixos/lib/eval-config.nix
+     directly, even though it is possible to set config.nixpkgs.pkgs.
+
+     For more information about writing NixOS modules, see
+     https://nixos.org/nixos/manual/index.html#sec-writing-modules
+
+     Note that you will need to have called Nixpkgs with the system
+     parameter set to the right value for your deployment target.
+  */
   nixos = configuration:
     (import (self.path + "/nixos/lib/eval-config.nix") {
       inherit (pkgs.stdenv.hostPlatform) system;
