@@ -19327,14 +19327,15 @@ in
 
   gnss-sdr = callPackage ../applications/radio/gnss-sdr { boost=boost166; };
 
-  gnuradio = callPackage ../applications/radio/gnuradio {
-    inherit (python2Packages) cheetah lxml Mako matplotlib numpy python pyopengl pyqt4 scipy wxPython pygtk;
+  gnuradio = libsForQt5.callPackage ../applications/radio/gnuradio {
+    inherit (python37Packages) Mako matplotlib numpy python pyopengl pyqt5 scipy pyzmq pyyaml pygobject3 pycairo;
     inherit (darwin.apple_sdk.frameworks) CoreAudio;
+    inherit (xorg) libX11;
     fftw = fftwFloat;
-    qwt = qwt6_qt4;
+    qwt = libsForQt5.qwt;
   };
 
-  gnuradio-with-packages = callPackage ../applications/radio/gnuradio/wrapper.nix {
+  gnuradio-with-packages = libsForQt5.callPackage ../applications/radio/gnuradio/wrapper.nix {
     inherit (python2Packages) python;
     extraPackages = [ gr-nacl gr-osmosdr gr-ais gr-rds ]
       ++ lib.optionals stdenv.isLinux [ gr-gsm gr-limesdr ];

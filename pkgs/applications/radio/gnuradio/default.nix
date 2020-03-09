@@ -1,64 +1,64 @@
-{ stdenv, fetchFromGitHub, writeText, makeWrapper
+{ mkDerivation, stdenv, fetchFromGitHub, writeText, makeWrapper
 # Dependencies documented @ https://gnuradio.org/doc/doxygen/build_guide.html
 # => core dependencies
-, cmake, pkgconfig, git, boost, cppunit, fftw
+, cmake, pkgconfig, git, boost, fftw, gmp, gsm, codec2, log4cpp, mpir
+, wrapGAppsHook, pango, cairo
+# => thrift for ctrlport
+, thrift
 # => python wrappers
-# May be able to upgrade to swig3
-, python, swig2, numpy, scipy, matplotlib
+, python, swig, numpy, scipy, matplotlib
 # => grc - the gnu radio companion
-, Mako, cheetah, pygtk # Note: GR is migrating to Mako. Cheetah should be removed for GR3.8
+, Mako, pyyaml, pygobject3, gtk3, gobject-introspection, pycairo
 # => gr-wavelet: collection of wavelet blocks
 , gsl
 # => gr-qtgui: the Qt-based GUI
-, qt4, qwt, pyqt4
-# => gr-wxgui: the Wx-based GUI
-, wxPython, lxml
+, qtbase, qwt, pyqt5
 # => gr-audio: audio subsystems (system/OS dependent)
 , alsaLib   # linux   'audio-alsa'
 , CoreAudio # darwin  'audio-osx'
+# => gr-zeromq
+, zeromq, cppzmq, pyzmq
 # => uhd: the Ettus USRP Hardware Driver Interface
 , uhd
 # => gr-video-sdl: PAL and NTSC display
 , SDL
 # Other
-, libusb1, orc, pyopengl
+, orc, pyopengl, libX11
 }:
 
-stdenv.mkDerivation rec {
+# TODO:
+# - build volk separately
+# - separate packages for submodules, grc?
+
+mkDerivation rec {
   pname = "gnuradio";
-  version = "3.7.13.4";
+  version = "3.8.1.0-rc1";
 
   src = fetchFromGitHub {
     owner = "gnuradio";
     repo = "gnuradio";
     rev = "v${version}";
-    sha256 = "0ybfn2zfr9lc1bi3c794l4bzpj8y6vas9c4rbcj4nqlx0zf3p8fn";
+    sha256 = "073xxppmflyi905qsiwvmjaplvc7fhml0h7kksn94v9c2c9sxk73";
     fetchSubmodules = true;
   };
 
   nativeBuildInputs = [
-    cmake pkgconfig git makeWrapper cppunit orc
+    cmake pkgconfig git makeWrapper orc wrapGAppsHook gobject-introspection
   ];
 
   buildInputs = [
-    boost fftw python swig2 lxml qt4
-    qwt SDL libusb1 uhd gsl
+    boost fftw python swig qtbase mpir gmp thrift pango cairo libX11
+    qwt SDL uhd gsl zeromq cppzmq log4cpp gtk3 gobject-introspection
   ] ++ stdenv.lib.optionals stdenv.isLinux  [ alsaLib   ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ CoreAudio ];
 
   propagatedBuildInputs = [
-    Mako cheetah numpy scipy matplotlib pyqt4 pygtk wxPython pyopengl
+    Mako numpy scipy matplotlib pyopengl pyzmq pyqt5 pygobject3 pyyaml pycairo
   ];
 
   NIX_LDFLAGS = "-lpthread";
 
   enableParallelBuilding = true;
-
-  postPatch = ''
-    substituteInPlace \
-        gr-fec/include/gnuradio/fec/polar_decoder_common.h \
-        --replace BOOST_CONSTEXPR_OR_CONST const
-  '';
 
   # Enables composition with nix-shell
   grcSetupHook = writeText "grcSetupHook.sh" ''
@@ -70,14 +70,9 @@ stdenv.mkDerivation rec {
 
   setupHook = [ grcSetupHook ];
 
-  # patch wxgui and pygtk check due to python importerror in a headless environment
-  # wxgtk gui will be removed in GR3.8
   # c++11 hack may not be necessary anymore
   preConfigure = ''
     export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -Wno-unused-variable ${stdenv.lib.optionalString (!stdenv.isDarwin) "-std=c++11"}"
-    sed -i 's/.*wx\.version.*/set(WX_FOUND TRUE)/g' gr-wxgui/CMakeLists.txt
-    sed -i 's/.*pygtk_version.*/set(PYGTK_FOUND TRUE)/g' grc/CMakeLists.txt
-    find . -name "CMakeLists.txt" -exec sed -i '1iadd_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)' "{}" ";"
   '';
 
   # Framework path needed for qwt6_qt4 but not qwt5
@@ -90,19 +85,15 @@ stdenv.mkDerivation rec {
   # - GNU Radio core is C++ but the user interface (GUI and API) is Python, so
   #   we must wrap the stuff in bin/.
   # Notes:
-  # - May want to use makeWrapper instead of wrapProgram
   # - may want to change interpreter path on Python examples instead of wrapping
   # - see https://github.com/NixOS/nixpkgs/issues/22688 regarding use of --prefix / python.withPackages
   # - see https://github.com/NixOS/nixpkgs/issues/24693 regarding use of DYLD_FRAMEWORK_PATH on Darwin
-  postInstall = ''
+  preFixup = ''
     printf "backend : Qt4Agg\n" > "$out/share/gnuradio/matplotlibrc"
-
-    for file in $(find $out/bin $out/share/gnuradio/examples -type f -executable); do
-        wrapProgram "$file" \
-            --prefix PYTHONPATH : $PYTHONPATH:$(toPythonPath "$out") \
-            --set MATPLOTLIBRC "$out/share/gnuradio" \
-            ${stdenv.lib.optionalString stdenv.isDarwin "--set DYLD_FRAMEWORK_PATH /System/Library/Frameworks"}
-    done
+    qtWrapperArgs+=(--prefix PYTHONPATH : $PYTHONPATH:$(toPythonPath "$out"))
+    qtWrapperArgs+=(--set MATPLOTLIBRC "$out/share/gnuradio")
+  '' + stdenv.lib.optionalString stdenv.isDarwin ''
+    qtWrapperArgs+=(--set DYLD_FRAMEWORK_PATH /System/Library/Frameworks")
   '';
 
   meta = with stdenv.lib; {
@@ -119,6 +110,6 @@ stdenv.mkDerivation rec {
     homepage = https://www.gnuradio.org;
     license = licenses.gpl3;
     platforms = platforms.linux ++ platforms.darwin;
-    maintainers = with maintainers; [ bjornfor fpletz ];
+    maintainers = with maintainers; [ bjornfor fpletz "Alexander Krimm <alex@wirew0rm.de>"];
   };
 }
