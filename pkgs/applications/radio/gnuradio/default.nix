@@ -110,6 +110,6 @@ mkDerivation rec {
     homepage = https://www.gnuradio.org;
     license = licenses.gpl3;
     platforms = platforms.linux ++ platforms.darwin;
-    maintainers = with maintainers; [ bjornfor fpletz "Alexander Krimm <alex@wirew0rm.de>"];
+    maintainers = with maintainers; [ bjornfor fpletz wirew0rm];
   };
 }
