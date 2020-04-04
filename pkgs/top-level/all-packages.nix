@@ -2530,6 +2530,10 @@ in
 
   xkbd = callPackage ../applications/misc/xkbd { };
 
+  libps3000a = callPackage ../applications/science/electronics/picoscope/libps3000a.nix {};
+  libps4000a = callPackage ../applications/science/electronics/picoscope/libps4000a.nix {};
+  libps6000 = callPackage ../applications/science/electronics/picoscope/libps6000.nix {};
+
   libpsm2 = callPackage ../os-specific/linux/libpsm2 { };
 
   optar = callPackage ../tools/graphics/optar {};
@@ -3426,6 +3430,8 @@ in
   dir2opus = callPackage ../tools/audio/dir2opus {
     inherit (pythonPackages) mutagen python wrapPython;
   };
+
+  picoscope = callPackage ../applications/science/electronics/picoscope/picoscope.nix { };
 
   picotts = callPackage ../tools/audio/picotts { };
 
