@@ -1,45 +1,53 @@
-{ mkDerivation, stdenv, fetchFromGitHub, writeText, makeWrapper
-# Dependencies documented @ https://gnuradio.org/doc/doxygen/build_guide.html
-# => core dependencies
-, cmake, pkgconfig, git, boost, fftw, gmp, gsm, codec2, log4cpp, mpir
-, wrapGAppsHook, pango, cairo
-# => thrift for ctrlport
+{ stdenv, fetchFromGitHub, git, wrapGAppsHook, writeText, makeWrapper, cmake, pkgconfig
+# math libraries
+, boost, volk, fftw, gmp, gsm, codec2, log4cpp, mpir
+# thrift for ctrlport
 , thrift
-# => python wrappers
-, python, swig, numpy, scipy, matplotlib
-# => grc - the gnu radio companion
-, Mako, pyyaml, pygobject3, gtk3, gobject-introspection, pycairo
-# => gr-wavelet: collection of wavelet blocks
+# python wrappers
+, pythonPackages, swig #, numpy, scipy, matplotlib
+# grc - the gnu radio companion
+, gtk3, gobject-introspection, pango, cairo
+# gr-wavelet: collection of wavelet blocks
 , gsl
-# => gr-qtgui: the Qt-based GUI
-, qtbase, qwt, pyqt5
-# => gr-audio: audio subsystems (system/OS dependent)
+# gr-qtgui: the Qt-based GUI
+, qtbase, qwt #, pyqt5
+# gr-audio: audio subsystems (system/OS dependent)
 , alsaLib   # linux   'audio-alsa'
 , CoreAudio # darwin  'audio-osx'
-# => gr-zeromq
-, zeromq, cppzmq, pyzmq
-# => uhd: the Ettus USRP Hardware Driver Interface
+# gr-zeromq
+, zeromq, cppzmq #, pyzmq
+# uhd: the Ettus USRP Hardware Driver Interface
 , uhd
-# => gr-video-sdl: PAL and NTSC display
+# gr-video-sdl: PAL and NTSC display
 , SDL
 # Other
-, orc, pyopengl, libX11
+, orc, libX11 #, pyopengl
 }:
 
+# archlinux dependencies
+# depends=('fftw' 'python-numpy' 'gsl' 'blas' 'boost-libs>=1.53'
+#     'libusbx' 'portaudio' 'libuhd' 'zeromq' 'libvolk' 'log4cpp' 'python-yaml'
+#     'gmp' 'gsm' 'codec2' 'python-mako' 'python-click-plugins' 'pango' 'gtk3')
+# makedepends=('boost' 'cmake' 'python-lxml' 'glu' 'swig' 'python-gobject'
+#     'qwt' 'python-pyqt5' 'python-cairo')
+
 # TODO:
-# - build volk separately
 # - separate packages for submodules, grc?
 
-mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "gnuradio";
   version = "3.8.1.0-rc1";
+
+  # each module gets its own output, the available modules can be controlled by passing them to the
+  # gnuradio-wrapper derivation
+  # outputs = [ out grc gr-wavelet gr-audio gr-wavelet gr-qtgui gr-audio gr-zeromq gr-uhd gr-video-sdl ];
 
   src = fetchFromGitHub {
     owner = "gnuradio";
     repo = "gnuradio";
     rev = "v${version}";
     sha256 = "073xxppmflyi905qsiwvmjaplvc7fhml0h7kksn94v9c2c9sxk73";
-    fetchSubmodules = true;
+    # fetchSubmodules = true; # we use our own build of libvolk
   };
 
   nativeBuildInputs = [
@@ -47,18 +55,18 @@ mkDerivation rec {
   ];
 
   buildInputs = [
-    boost fftw python swig qtbase mpir gmp thrift pango cairo libX11
+    boost volk fftw pythonPackages.python swig qtbase mpir gmp thrift pango cairo libX11
     qwt SDL uhd gsl zeromq cppzmq log4cpp gtk3 gobject-introspection
   ] ++ stdenv.lib.optionals stdenv.isLinux  [ alsaLib   ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ CoreAudio ];
 
-  propagatedBuildInputs = [
+  propagatedBuildInputs = with pythonPackages; [
     Mako numpy scipy matplotlib pyopengl pyzmq pyqt5 pygobject3 pyyaml pycairo
   ];
 
   NIX_LDFLAGS = "-lpthread";
 
-  enableParallelBuilding = true;
+  # enableParallelBuilding = true; # should be the default on cmake anyways?
 
   # Enables composition with nix-shell
   grcSetupHook = writeText "grcSetupHook.sh" ''
@@ -67,17 +75,24 @@ mkDerivation rec {
     }
     addEnvHooks "$targetOffset" addGRCBlocksPath
   '';
-
   setupHook = [ grcSetupHook ];
 
   # c++11 hack may not be necessary anymore
-  preConfigure = ''
-    export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -Wno-unused-variable ${stdenv.lib.optionalString (!stdenv.isDarwin) "-std=c++11"}"
-  '';
+  # preConfigure = ''
+  #   export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -Wno-unused-variable ${stdenv.lib.optionalString (!stdenv.isDarwin) "-std=c++11"}"
+  # '';
 
   # Framework path needed for qwt6_qt4 but not qwt5
-  cmakeFlags =
-    stdenv.lib.optionals stdenv.isDarwin [ "-DCMAKE_FRAMEWORK_PATH=${qwt}/lib" ];
+  cmakeFlags = [
+    "-DPYTHON_EXECUTABLE=${pythonPackages.python}/bin/python3"
+    # "-DPYTHON_INCLUDE_DIR=/usr/include/python3.8"
+    # "-DPYTHON_LIBRARY=/usr/lib/libpython3.8.so"
+    # "-DGR_PYTHON_DIR=/usr/lib/python3.8/site-packages"
+    "-DENABLE_INTERNAL_VOLK=OFF"
+    "-DENABLE_GRC=ON"
+    "-DENABLE_GR_QTGUI=ON"
+    # "-DQWT_LIBRARIES=/usr/lib/libqwt.so"
+    ] ++ stdenv.lib.optionals stdenv.isDarwin [ "-DCMAKE_FRAMEWORK_PATH=${qwt}/lib" ];
 
   # - Ensure we get an interactive backend for matplotlib. If not the gr_plot_*
   #   programs will not display anything. Yes, $MATPLOTLIBRC must point to the
@@ -110,6 +125,6 @@ mkDerivation rec {
     homepage = https://www.gnuradio.org;
     license = licenses.gpl3;
     platforms = platforms.linux ++ platforms.darwin;
-    maintainers = with maintainers; [ bjornfor fpletz wirew0rm];
+    maintainers = with maintainers; [ bjornfor fpletz wirew0rm ];
   };
 }

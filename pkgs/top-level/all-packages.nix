@@ -19328,18 +19328,17 @@ in
   gnss-sdr = callPackage ../applications/radio/gnss-sdr { boost=boost166; };
 
   gnuradio = libsForQt5.callPackage ../applications/radio/gnuradio {
-    inherit (python37Packages) Mako matplotlib numpy python pyopengl pyqt5 scipy pyzmq pyyaml pygobject3 pycairo;
     inherit (darwin.apple_sdk.frameworks) CoreAudio;
     inherit (xorg) libX11;
+    pythonPackages = python37Packages;
     fftw = fftwFloat;
     qwt = libsForQt5.qwt;
   };
-
-  gnuradio-with-packages = libsForQt5.callPackage ../applications/radio/gnuradio/wrapper.nix {
-    inherit (python2Packages) python;
-    extraPackages = [ gr-nacl gr-osmosdr gr-ais gr-rds ]
-      ++ lib.optionals stdenv.isLinux [ gr-gsm gr-limesdr ];
-  };
+  # gnuradio-with-packages = libsForQt5.callPackage ../applications/radio/gnuradio/wrapper.nix {
+  #   pythonPackages = python37Packages;
+  #   extraPackages = with gnuradio ; [ gr-wavelet gr-audio gr-wavelet gr-qtgui gr-audio gr-zeromq gr-uhd gr-video-sdl gr-nacl gr-osmosdr gr-ais gr-rds ]
+  #     ++ lib.optionals stdenv.isLinux [ gr-gsm gr-limesdr ];
+  # };
 
   grandorgue = callPackage ../applications/audio/grandorgue { };
 
@@ -21241,6 +21240,8 @@ in
     inherit (darwin.apple_sdk.frameworks) IOKit;
   };
 
+  picoscope = callPackage ../applications/science/electronics/picoscope { };
+
   pidgin = callPackage ../applications/networking/instant-messengers/pidgin {
     openssl = if config.pidgin.openssl or true then openssl else null;
     gnutls = if config.pidgin.gnutls or false then gnutls else null;
@@ -22421,6 +22422,8 @@ in
   vocal = callPackage ../applications/audio/vocal { };
 
   vogl = libsForQt5.callPackage ../development/tools/vogl { };
+
+  volk = callPackage ../development/libraries/volk { pythonPackages = python37Packages; };
 
   volnoti = callPackage ../applications/misc/volnoti { };
 
