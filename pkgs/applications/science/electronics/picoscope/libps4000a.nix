@@ -5,7 +5,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl{
     url = "https://labs.picotech.com/debian/pool/main/libp/${pname}/${pname}_${version}_amd64.deb";
-    sha256 = "1pwrm4fk91n7sfz42a7w5w9pv881099ilggsmv86bbq4941kifkx";
+    sha256 = "1j7bxpyscf4fxd8pkmqgzwg78phxyd02kal39g0cw2vjsn94svms";
   };
 
   nativeBuildInputs = [ dpkg autoPatchelfHook ];

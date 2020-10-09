@@ -1,4 +1,4 @@
-{ lib, stdenv, autoPatchelfHook, fetchurl, makeWrapper, libusb1, dpkg, libps3000a, gtk-sharp-2_0, mono }:
+{ lib, stdenv, autoPatchelfHook, fetchurl, makeWrapper, libusb1, dpkg, gtk-sharp-2_0, mono }:
 with lib;
 stdenv.mkDerivation rec {
   pname = "picoscope";
@@ -29,10 +29,22 @@ stdenv.mkDerivation rec {
       url = "https://labs.picotech.com/debian/pool/main/libu/libusbtc08/libusbtc08_2.0.17-1r1441_amd64.deb";
       sha256 = "0azjl7hl0si6ymlr28yk4cvn0csn0gk3b4mj0macwbdd4k4bq4nb";
     })
+    (fetchurl{
+      url = "https://labs.picotech.com/debian/pool/main/libp/libps3000a/libps3000a_2.1.40-6r2131_amd64.deb";
+      sha256 = "187bgpdvpmsxh9j9j4i2dg9rjrmn8qcmvskzfdb8w4r8r8jqgm3i";
+    })
+    (fetchurl{
+      url = "https://labs.picotech.com/debian/pool/main/libp/libps4000a/libps4000a_2.1.40-2r2131_amd64.deb";
+      sha256 = "1pwrm4fk91n7sfz42a7w5w9pv881099ilggsmv86bbq4941kifkx";
+    })
+    (fetchurl{
+      url = "https://labs.picotech.com/debian/pool/main/libp/libps6000/libps6000_2.1.40-6r2131_amd64.deb";
+      sha256 = "1j7bxpyscf4fxd8pkmqgzwg78phxyd02kal39g0cw2vjsn94svms";
+    })
   ];
 
   nativeBuildInputs = [ dpkg autoPatchelfHook makeWrapper ];
-  buildInputs = [ libusb1 libps3000a gtk-sharp-2_0 mono];
+  buildInputs = [ libusb1 gtk-sharp-2_0 mono];
 
   dontConfigure = true;
   dontBuild = true;
@@ -43,13 +55,15 @@ stdenv.mkDerivation rec {
     done
     '';
   installPhase = ''
+    ls -R
+    mv ./opt/picoscope/include/**/*Api.h ./opt/picoscope/include/
     mv ./opt/picoscope $out
     rm $out/bin/picoscope
     makeWrapper "${mono}/bin/mono" "$out/bin/picoscope" \
       --add-flags "$out/lib/PicoScope.GTK.exe" \
       --prefix MONO_GAC_PREFIX : ${gtk-sharp-2_0} \
-      --prefix MONO_GAC_PREFIX : ${libps3000a} \
-      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ gtk-sharp-2_0 gtk-sharp-2_0.gtk libps3000a ]}
+      --prefix MONO_GAC_PREFIX : $out \
+      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ gtk-sharp-2_0 gtk-sharp-2_0.gtk]}
   '';
 
   meta = with stdenv.lib; {
