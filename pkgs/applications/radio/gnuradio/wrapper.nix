@@ -1,5 +1,12 @@
 { stdenv
+# The unwrapped gnuradio derivation
 , unwrapped
+# If it's a minimal build, we don't want to wrap it with lndir and
+# wrapProgram..
+, wrap ? true
+# To define gnuradio packages in ./packages.nix
+, pkgs
+# For the wrapper
 , makeWrapper
 # For lndir
 , xorg
@@ -36,12 +43,16 @@ let
           []
       )
       ) unwrapped.featuresInfo)
-    ++ stdenv.lib.optionals (unwrapped.hasFeature "python-support" unwrapped.features) [
-      # Add unwrapped itself as a python module
-      (unwrapped.python.pkgs.toPythonModule unwrapped)
-    ]
+    ++ stdenv.lib.optionals
+      (unwrapped.hasFeature "python-support" unwrapped.features)
+      (
+        # Add unwrapped itself as a python module
+        [ (unwrapped.python.pkgs.toPythonModule unwrapped) ]
+        # Add all extraPackages as python modules
+        ++ (builtins.map unwrapped.python.pkgs.toPythonModule extraPackages)
+      )
   ;
-  python3Env = unwrapped.python.withPackages(ps: pythonPkgs);
+  pythonEnv = unwrapped.python.withPackages(ps: pythonPkgs);
 
   name = (stdenv.lib.appendToName "wrapped" unwrapped).name;
   makeWrapperArgs = builtins.concatStringsSep " " ([
@@ -87,48 +98,84 @@ let
       (if unwrapped.versionAttr.major == "3.8" then
         [
           "--prefix" "QT_PLUGIN_PATH" ":"
-          "${stdenv.lib.getBin unwrapped.qt.qtbase}/${unwrapped.qt.qtbase.qtPluginPrefix}"
+          "${
+            stdenv.lib.makeSearchPath
+            unwrapped.qt.qtbase.qtPluginPrefix
+            (builtins.map stdenv.lib.getBin [
+              unwrapped.qt.qtbase
+              unwrapped.qt.qtwayland
+            ])
+          }"
           "--prefix" "QML2_IMPORT_PATH" ":"
-          "${stdenv.lib.getBin unwrapped.qt.qtbase}/${unwrapped.qt.qtbase.qtQmlPrefix}"
+          "${
+            stdenv.lib.makeSearchPath
+            unwrapped.qt.qtbase.qtQmlPrefix
+            (builtins.map stdenv.lib.getBin [
+              unwrapped.qt.qtbase
+              unwrapped.qt.qtwayland
+            ])
+          }"
         ]
       else
-        # TODO: Add here qt4 related environment for 3.7?
+        # Add here qt4 related environment for 3.7?
         [
 
         ]
       )
     ++ extraMakeWrapperArgs
   );
-in
-stdenv.mkDerivation {
-  inherit name;
 
-  buildInputs = [
-    makeWrapper
-    xorg.lndir
-  ];
-
-  passthru = {
-    inherit python3Env pythonPkgs unwrapped;
+  packages = import ../../../top-level/gnuradio-packages.nix {
+    inherit pkgs;
+    gnuradio = unwrapped;
   };
-
-  buildCommand = ''
-    mkdir $out
-    cd $out
-    lndir -silent ${unwrapped}
-    for i in $out/bin/*; do
-      if [[ ! -x "$i" ]]; then
-        continue
-      fi
-      cp -L "$i" "$i".tmp
-      mv -f "$i".tmp "$i"
-      if head -1 "$i" | grep -q ${unwrapped.python}; then
-        substituteInPlace "$i" \
-          --replace ${unwrapped.python} ${python3Env}
-      fi
-      wrapProgram "$i" ${makeWrapperArgs}
-    done
-  '';
-
-  inherit (unwrapped) meta;
-}
+  passthru = unwrapped.passthru // {
+    inherit
+      pythonEnv
+      pythonPkgs
+      unwrapped
+    ;
+    pkgs = packages;
+  };
+  self = if wrap then
+    stdenv.mkDerivation {
+      inherit name passthru;
+      buildInputs = [
+        makeWrapper
+        xorg.lndir
+      ];
+      buildCommand = ''
+        mkdir $out
+        cd $out
+        lndir -silent ${unwrapped}
+        ${stdenv.lib.optionalString
+          (extraPackages != [])
+          (builtins.concatStringsSep "\n"
+            (builtins.map (pkg: ''
+              if [[ -d ${stdenv.lib.getBin pkg}/bin/ ]]; then
+                lndir -silent ${pkg}/bin ./bin
+              fi
+            '') extraPackages)
+          )
+        }
+        for i in $out/bin/*; do
+          if [[ ! -x "$i" ]]; then
+            continue
+          fi
+          cp -L "$i" "$i".tmp
+          mv -f "$i".tmp "$i"
+          if head -1 "$i" | grep -q ${unwrapped.python}; then
+            substituteInPlace "$i" \
+              --replace ${unwrapped.python} ${pythonEnv}
+          fi
+          wrapProgram "$i" ${makeWrapperArgs}
+        done
+      '';
+      inherit (unwrapped) meta;
+    }
+  else
+    unwrapped.overrideAttrs(_: {
+      inherit passthru;
+    })
+  ;
+in self

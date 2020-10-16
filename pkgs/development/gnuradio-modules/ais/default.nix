@@ -1,14 +1,12 @@
-{ stdenv, fetchFromGitHub, cmake, pkgconfig, boost, gnuradio
-, makeWrapper, cppunit, gr-osmosdr, log4cpp
-, pythonSupport ? true, python, swig
+{ stdenv
+, mkDerivation
+, fetchFromGitHub
+, osmosdr
 }:
 
-assert pythonSupport -> python != null && swig != null;
-
-stdenv.mkDerivation {
+mkDerivation rec {
   pname = "gr-ais";
   version = "2015-12-20";
-
   src = fetchFromGitHub {
     owner = "bistromath";
     repo = "gr-ais";
@@ -16,17 +14,11 @@ stdenv.mkDerivation {
     rev = "8502d0252a2a1a9b8d1a71795eaeb5d820684054";
     sha256 = "1b9j0kc74cw12a7jv4lii77dgzqzg2s8ndzp4xmisxksgva1qfvh";
   };
+  disabled = ["3.8"];
 
-  nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    cmake boost gnuradio makeWrapper cppunit gr-osmosdr log4cpp
-  ] ++ stdenv.lib.optionals pythonSupport [ python swig ];
-
-  postInstall = ''
-    for prog in "$out"/bin/*; do
-        wrapProgram "$prog" --set PYTHONPATH $PYTHONPATH:$(toPythonPath "$out")
-    done
-  '';
+    osmosdr
+  ];
 
   enableParallelBuilding = true;
 
