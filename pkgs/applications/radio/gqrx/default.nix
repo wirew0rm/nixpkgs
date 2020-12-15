@@ -4,8 +4,7 @@
 # added automatically to the buildInputs, so we use whatever qt5 is defined in
 # all-packages.nix
 , qt5
-, gnuradioPackages
-, mkDerivation
+, gnuradioMinimal
 # drivers (optional):
 , rtl-sdr, hackrf
 }:
@@ -23,7 +22,7 @@ gnuradioMinimal.pkgs.mkDerivation rec {
 
   nativeBuildInputs = [ qt5.wrapQtAppsHook ];
   buildInputs = [
-    qt5.qtbase qt5.qtsvg gnuradioPackages.osmosdr rtl-sdr hackrf
+    qt5.qtbase qt5.qtsvg gnuradioMinimal.pkgs.osmosdr rtl-sdr hackrf
   ];
 
   enableParallelBuilding = true;
