@@ -21502,7 +21502,7 @@ in
 
   gpx = callPackage ../applications/misc/gpx { };
 
-  gqrx = gnuradio.callPackage ../applications/radio/gqrx { };
+  gqrx = callPackage ../applications/radio/gqrx { };
 
   gpx-viewer = callPackage ../applications/misc/gpx-viewer { };
 
