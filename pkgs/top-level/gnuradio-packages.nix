@@ -37,4 +37,8 @@ in {
 
   limesdr = callPackage ../development/gnuradio-modules/limesdr/default.nix { };
 
+  digitizers = callPackage ../development/gnuradio-modules/digitizers/default.nix { };
+
+  flowgraph = callPackage ../development/gnuradio-modules/flowgraph/default.nix { };
+
 })

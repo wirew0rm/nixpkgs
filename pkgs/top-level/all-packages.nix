@@ -3431,7 +3431,14 @@ in
     inherit (pythonPackages) mutagen python wrapPython;
   };
 
-  picoscope = callPackage ../applications/science/electronics/picoscope/picoscope.nix { };
+  picoscope-mono4 = callPackage ../applications/science/electronics/picoscope/picoscope.nix {
+    mono = mono4;
+    gtk-sharp = gtk-sharp-2_0.override { mono = mono4; };
+  };
+
+  picoscope = callPackage ../applications/science/electronics/picoscope/picoscope.nix {
+    gtk-sharp = gtk-sharp-2_0;
+  };
 
   picotts = callPackage ../tools/audio/picotts { };
 
