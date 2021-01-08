@@ -21476,6 +21476,33 @@ in
     };
   };
 
+  gnuradio3_7Full = let gr = gnuradio3_7.override {
+      unwrapped = gnuradio3_7.unwrapped.override {boost = boost159; uhd = uhd.override { boost = boost159; }; };
+    };
+    in
+    gr.override { extraPackages = with gr.pkgs; [
+      #osmosdr
+      #rds
+      #limesdr
+      #ais
+      #gsm
+      #nacl
+      # (flowgraph.override {boost = boost155;}) # depends on digitizers
+      (digitizers.override { boost = boost155;})
+      ];};
+
+  gnuradioFull = gnuradio.override {
+    extraPythonPackages = with gnuradio.python.pkgs; [
+      setuptools # for gr_modtool
+      numpy scipy matplotlib tkinter # for gr_plot et al
+    ];
+    extraPackages = with gnuradio.pkgs; [
+      osmosdr
+      rds
+      limesdr
+    ];
+  };
+
   grandorgue = callPackage ../applications/audio/grandorgue { };
 
   goldendict = libsForQt5.callPackage ../applications/misc/goldendict {
